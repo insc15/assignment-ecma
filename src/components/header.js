@@ -8,7 +8,7 @@ const header = function(){
                 <div class='flex ml-auto'>
                     <form method='get' action='' class='flex h-10 rounded overflow-hidden mr-4'>
                         <input name='s' class='w-[626px] focus:outline-none outline-none py-1 px-2 text-black'/>
-                        <button class='bg-[#0D5CB6] px-4 py-1 flex items-center' type='submit'><img src='/assets/icons/search.png' class='mr-2'/>Tìm kiếm</button>
+                        <button class='bg-primary px-4 py-1 flex items-center' type='submit'><img src='/assets/icons/search.png' class='mr-2'/>Tìm kiếm</button>
                     </form>
                     <div class='flex items-center mr-6'>
                         <img src='/assets/icons/account.png' class='mr-2'/>
