@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-.book-filter li.active{
+.book-sort li.active{
     @apply border-primary text-primary
+}
+
+div.splide__track--nav>.splide__list>.splide__slide.is-active{
+    @apply border-primary rounded border-2
+}
+
+.splide__slide img{
+    @apply h-full mx-auto
 }

@@ -12,9 +12,11 @@
     "vite": "^4.1.0"
   },
   "dependencies": {
+    "@splidejs/splide": "^4.1.4",
     "autoprefixer": "^10.4.13",
     "navigo": "^8.11.1",
     "postcss": "^8.4.21",
+    "slugify": "^1.6.5",
     "tailwindcss": "^3.2.4"
   }
 }

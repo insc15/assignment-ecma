@@ -15,7 +15,14 @@ module.exports = {
         },
         'gray' : {
           'primary' : '#808089',
-        }
+          'secondary' : '#EEEEEE',
+        },
+        'green' : {
+          'primary' : '#00AB56'
+        },
+        'red' : {
+          'primary' : '#FF424E'
+        },
       }
     },
   },
