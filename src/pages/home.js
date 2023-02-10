@@ -51,6 +51,7 @@ const home = function() {
                     ${
                         db.map(book => {
                             if(book.isHidden){return null}
+                            const discountPercent = (Math.round((1 - book.current_seller.price / (book.original_price || 1002000)) * 100)) > 0 ? `<p class='text-sm text-red-primary px-1 border border-red-primary rounded bg-red-primary bg-opacity-10'>${Math.round((1 - book.current_seller.price / (book.original_price || 1002000)) * 100)}%</p>` : ''
                             return (`
                                 <div class='w-1/4 px-3'>
                                     <a href='/product/${book.id}' class='hover:shadow-xl block p-2 h-full'>
@@ -62,11 +63,14 @@ const home = function() {
                                             <p class='text-green-primary text-xs mb-2'>GIAO SIÊU TỐC 2H</p>
                                             <h4 class='text-sm mb-2'>${book.name}</h4>
                                             <div class='flex items-center mb-2'>
-                                                ${vote(5)}
-                                                <span class='mx-2 text-xs text-gray-primary leading-3'>|</span>
-                                                <p class='text-xs text-gray-primary'>Đã bán ${Math.floor(Math.random() * 1000) + 1}+</p>
+                                                ${
+                                                    [vote(book.rating_average),book.quantity_sold?.text && `<p class='text-xs text-gray-primary'>${book.quantity_sold.text}</p>`].filter(item => item !== undefined || null).join(`<span class='mx-2 text-xs text-gray-primary leading-3'>|</span>`)
+                                                }
                                             </div>
-                                            <p class='text-sm text-red-primary font-medium'>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(book.current_seller.price)}</p>
+                                            <div class='flex items-center'>
+                                                <p class='text-lg mr-2 text-red-primary font-medium'>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(book.current_seller.price)}</p>
+                                                ${discountPercent}
+                                            </div>
                                         </div>
                                     </a>
                                 </div>

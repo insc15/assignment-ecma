@@ -1,10 +1,14 @@
-import db from '../../db' assert { type: 'json' }
-import slugify from 'slugify'
 import { Splide } from '@splidejs/splide'
 import '@splidejs/splide/dist/css/themes/splide-default.min.css'
 import vote from '../components/vote'
+import { getRelatedByCategory } from '../../lib'
+import database from '../../db.json' assert { type: 'json' }
 
 const product = function(product){
+    const positionInTop1000BestSeller = database.filter((book) => !book.isHidden && book.quantity_sold).sort((a, b) => b.quantity_sold.value - a.quantity_sold.value).findIndex(item => item.id === product.id) + 1
+
+    console.log(positionInTop1000BestSeller)
+
     document.addEventListener('DOMContentLoaded', function () {
         const main = new Splide('#main-slider', {
             type: 'fade',
@@ -39,13 +43,17 @@ const product = function(product){
         main.mount();
         thumbnails.mount();
 
-        const related = new Splide( '#related-slider', {
+        const related = document.querySelector('#related-slider') &&  new Splide( '#related-slider', {
             perPage: 6,
             rewind : true,
+            pagination: false,
           } );
           
-        related.mount();
+        related?.mount();
     })
+
+    const author = product.authors?.map(author => author.name).join(', ') || 'Chưa xác định'
+    const discountPercent = Math.round((1 - product.current_seller.price / (product.original_price)) * 100)
 
     return (`
         <div class='max-w-screen-xl mx-auto py-4'>
@@ -76,21 +84,24 @@ const product = function(product){
                 </div>
                 <div class='w-2/3 pl-3'>
                     <div class='flex'>
-                        <p class='mr-4'>Tác giả: <span class='text-primary'>Ca Tây</span></p>
-                        <p>Đứng thứ 13 trong: <span class='text-primary mr-2'>Top 1000</span><span class='text-primary mr-2'>Sách tư duy - Kỹ năng sống</span><span class='text-primary'>bán chạy tháng này</span></p>
+                        <p class='mr-4'>Tác giả: <span class='text-primary'>${author}</span></p>
+                        ${
+                            positionInTop1000BestSeller > 0 ? `<p>Đứng thứ 13 trong: <span class='text-primary mr-2'>Top 1000</span><span class='text-primary mr-2'>Sách tư duy - Kỹ năng sống</span><span class='text-primary'>bán chạy tháng này</span></p>` : ''
+                        }
                     </div>
                     <h1 class='text-2xl mb-2 w-3/4'>${product.name}</h1>
                     <div class='flex items-center gap-2'>
-                        ${vote(5)}
-                        <p class='text-gray-primary'>(Xem 2942 đánh giá)</p>
-                        <span class='mx-2 text-gray-primary leading-3'>|</span>
-                        <p class=' text-gray-primary'>Đã bán 1000+</p>
+                        ${
+                            [vote(product.rating_average),product.quantity_sold?.text && `<p class='text-xs text-gray-primary'>${product.quantity_sold.text}</p>`].filter(item => item !== undefined || null).join(`<span class='mx-2 text-xs text-gray-primary leading-3'>|</span>`)
+                        }
                     </div>
                     <div class='min-h-[103px] py-3 px-4 bg-[#FAFAFA] mb-8 mt-5 pb-4 w-3/4 after:content[""] after:-bottom-4 after:w-full after:h-px after:bg-[#F2F2F2] after:absolute relative after:left-0'>
                         <div class='flex items-end gap-2'>
                             <p class='text-3xl text-red-primary font-medium'>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.current_seller.price)}</p>
-                            <p class='text-sm text-gray-primary'>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.original_price || 1002000)}</p>
-                            <p class='text-sm text-red-primary px-1 border border-red-primary rounded bg-red-primary bg-opacity-10'>${Math.round((1 - product.current_seller.price / (product.original_price || 1002000)) * 100)}%</p>
+                            ${
+                                discountPercent > 0 ? `<p class='text-sm text-gray-primary'>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.original_price || 1002000)}</p>
+                                <p class='text-sm text-red-primary px-1 border border-red-primary rounded bg-red-primary bg-opacity-10'>${discountPercent}%</p>` : ''
+                            }
                         </div>
                     </div>
                     <div class='pb-16 border-b border-[#F2F2F2] w-3/4'>
@@ -106,37 +117,43 @@ const product = function(product){
             </div>
             <div class='py-2'>
                 <h4 class='text-xl text-black-primary mb-3'>Sản Phẩm Tương Tự</h4>
-                <div id="related-slider" class="splide mb-4">
-                    <div class="splide__track">
-                        <ul class="splide__list">
-                            ${
-                                db.map(book => {
-                                    if(book.isHidden){return null}
-                                    return (`
-                                        <li class="splide__slide">
-                                            <a href='/product/${book.id}' class='hover:shadow-xl block p-2 h-full'>
-                                                <div class='relative pt-[100%]'>
-                                                    <img class='absolute top-0 left-0 right-0 bottom-0' src='${book.images[0].medium_url}' alt='${book.name}' />
-                                                </div>
-                                                <div class='py-3'>
-                                                    <img class='w-14 mb-2' src='/assets/tikinow.png' alt='tikinow' />
-                                                    <p class='text-green-primary text-xs mb-2'>GIAO SIÊU TỐC 2H</p>
-                                                    <h4 class='text-sm mb-2'>${book.name}</h4>
-                                                    <div class='flex items-center mb-2'>
-                                                        ${vote(5)}
-                                                        <span class='mx-2 text-xs text-gray-primary leading-3'>|</span>
-                                                        <p class='text-xs text-gray-primary'>Đã bán ${Math.floor(Math.random() * 1000) + 1}+</p>
+                ${
+                    getRelatedByCategory(product).length > 0 ? `
+                    <div id="related-slider" class="splide mb-4">
+                        <div class="splide__track">
+                            <ul class="splide__list">
+                                ${
+                                    getRelatedByCategory(product).map(book => {
+                                        const discountPercent = (Math.round((1 - book.current_seller.price / (book.original_price || 1002000)) * 100)) > 0 ? `<p class='text-sm text-red-primary px-1 border border-red-primary rounded bg-red-primary bg-opacity-10'>${Math.round((1 - book.current_seller.price / (book.original_price || 1002000)) * 100)}%</p>` : ''
+                                        return (`
+                                            <li class="splide__slide">
+                                                <a href='/product/${book.id}' class='hover:shadow-xl block p-2 h-full'>
+                                                    <div class='relative pt-[100%]'>
+                                                        <img class='absolute top-0 left-0 right-0 bottom-0 h-full mx-auto' src='${book.images[0].medium_url}' alt='${book.name}' />
                                                     </div>
-                                                    <p class='text-sm text-red-primary font-medium'>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(book.current_seller.price)}</p>
-                                                </div>
-                                            </a>
-                                        </li>
-                                    `)
-                                }).join('')
-                            }
-                        </ul>
-                    </div>
-                </div>
+                                                    <div class='py-3'>
+                                                        <img class='w-14 mb-2' src='/assets/tikinow.png' alt='tikinow' />
+                                                        <p class='text-green-primary text-xs mb-2'>GIAO SIÊU TỐC 2H</p>
+                                                        <h4 class='text-sm mb-2'>${book.name}</h4>
+                                                        <div class='flex items-center mb-2'>
+                                                            ${
+                                                                [vote(product.rating_average),product.quantity_sold?.text && `<p class='text-xs text-gray-primary'>${product.quantity_sold.text}</p>`].filter(item => item !== undefined || null).join(`<span class='mx-2 text-xs text-gray-primary leading-3'>|</span>`) || ''
+                                                            }
+                                                        </div>
+                                                        <div class='flex items-center'>
+                                                            <p class='text-lg mr-2 text-red-primary font-medium'>${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(book.current_seller.price)}</p>
+                                                            ${discountPercent}
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        `)
+                                    }).join('')
+                                }
+                            </ul>
+                        </div>
+                    </div>` : ''
+                }
             </div>
             <div class='py-3 w-3/4'>
                 <h4 class='text-xl text-black-primary mb-3'>Thông tin chi tiết</h4>
