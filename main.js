@@ -1,25 +1,36 @@
-import Navigo from 'navigo'
-import javascriptLogo from './javascript.svg'
-import header from './src/components/header'
 import home from './src/pages/home'
-import footer from './src/components/footer'
 import product from './src/pages/product'
-import db from './db.json' assert { type: 'json' }
-import slugify from 'slugify'
+import { router, render } from './lib'
+import loginRegForm from './src/pages/auth/login-reg-form'
+import Cookies from 'js-cookie'
+import adminDashboard from './src/pages/admin'
+import adminProduct from './src/pages/admin/product'
 
-const router = new Navigo('/')
+const requireAdmin = (done, match) => {
+  if (Cookies.get('user') && JSON.parse(Cookies.get('user')).role === 'admin') {
+    done()
+  } else {
+    done(false)
+    router.navigate(`/`)
+  }
+};
 
-const render = function(component, name) {
-  document.title = name
-  document.querySelector('#app').innerHTML = header + component + footer
-}
+router.on('/', () => render(home, document.querySelector('#app')))
 
-router.on('/', () => render(home, 'Nhà sách Tiki'))
+router.on('/admin', () => {
+  render(adminDashboard, document.querySelector('#app'))
+}, { before: requireAdmin })
 
-router.on('/product/:id', ({data: {id}}) => {
-  const product_data = db.find(book => book.id == id)
+router.on('/admin/product/:id', async({ data: { id } }) => {
+  render(() => adminProduct(id), document.querySelector('#app'))
+}, { before: requireAdmin })
 
-  !product_data ? router.navigate('/') : render(product(product_data), product_data.name)
+router.on('/login', ({ params }) => {
+  render(() => loginRegForm(params?.redirect | ''), document.querySelector('#app'))
+}, { before: (done) => { if (Cookies.get('user')) { done(false); router.navigate('/') } else { done() } } })
+
+router.on('/product/:id', async ({ data: { id } }) => {
+  render(() => product(id), document.querySelector('#app'))
 })
 
 router.resolve()

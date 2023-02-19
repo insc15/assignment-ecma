@@ -1,30 +1,41 @@
-import { getCategoriesFromDatabase } from "../../lib"
-import db from "../../db.json"
+import { getCategoriesFromDatabase, useEffect, useState } from "../../lib"
+import footer from "../components/footer"
+import header from "../components/header"
 import vote from "../components/vote"
-import slugify from "slugify"
+import axios from "axios"
 
 const home = function() {
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.book-sort li').forEach(item => {
-            item.addEventListener('click', function(){
-                document.querySelectorAll('.book-sort li').forEach(item => {
-                    item.classList.remove('active')
-                })
-                this.classList.add('active')
-            })
-        })
-    }, false)
+    const [books, setBooks] = useState([])
+    const [categories, setCategories] = useState([])
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     document.querySelectorAll('.book-sort li').forEach(item => {
+    //         item.addEventListener('click', function(){
+    //             document.querySelectorAll('.book-sort li').forEach(item => {
+    //                 item.classList.remove('active')
+    //             })
+    //             this.classList.add('active')
+    //         })
+    //     })
+    // }, false)
+
+    useEffect(async()=>{
+        const data = (await axios.get('http://localhost:3000/books')).data
+        setBooks(data)
+        const categories = await getCategoriesFromDatabase()
+        setCategories(categories)
+    },[])
 
     return (`
+        ${header()}
         <div class='max-w-screen-xl mx-auto py-4 flex'>
             <section class='basis-3/12 text-black-primary'>
                 <p class='text-lg uppercase mb-4'>Danh mục sản phẩm</p>
                 <div class='flex flex-col'>
-                    ${
-                        getCategoriesFromDatabase().map(category => {
-                            return `<a class='mb-2' href='/category/${category.id}'>${category.name}</a>`
-                        }).join('')
-                    }
+                ${
+                    categories.map(category => {
+                        return `<a class='mb-2' href='/category/${category.id}'>${category.name}</a>`
+                    }).join('')
+                }
                 </div>
             </section>
             <section class='basis-9/12'>
@@ -49,7 +60,7 @@ const home = function() {
                 </div>
                 <div class='flex flex-wrap -mx-4'>
                     ${
-                        db.map(book => {
+                        books.map(book => {
                             if(book.isHidden){return null}
                             const discountPercent = (Math.round((1 - book.current_seller.price / (book.original_price || 1002000)) * 100)) > 0 ? `<p class='text-sm text-red-primary px-1 border border-red-primary rounded bg-red-primary bg-opacity-10'>${Math.round((1 - book.current_seller.price / (book.original_price || 1002000)) * 100)}%</p>` : ''
                             return (`
@@ -80,7 +91,8 @@ const home = function() {
                 </div>
             </section>
         </div>
+        ${footer}
     `)
 }
 
-export default home()
+export default home
